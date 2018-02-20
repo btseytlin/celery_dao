@@ -1,0 +1,21 @@
+version: "3"
+services:
+  rabbitmq:
+    image: rabbitmq
+  dao:
+    build: .
+    image: celery_dao:latest
+    links:
+      - rabbitmq
+    volumes:
+      - ".:/src"
+    depends_on:
+      - worker
+  worker:
+    image: celery_dao:latest
+    command: celery -A celery_dao.celery:worker worker --loglevel=info
+    links:
+      - rabbitmq
+    volumes:
+      - ".:/src"
+
