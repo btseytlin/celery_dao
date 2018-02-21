@@ -5,12 +5,16 @@ services:
   dao:
     build: .
     image: celery_dao:latest
+    ports:
+      - 8000:8000
     links:
       - rabbitmq
     volumes:
       - ".:/src"
     depends_on:
       - worker
+    environment:
+      DB_PATH: '/src/db.db'
   worker:
     image: celery_dao:latest
     command: celery -A celery_dao.celery:worker worker --loglevel=info

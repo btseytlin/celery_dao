@@ -1,16 +1,9 @@
-import time
-from .celery import worker
-from .tasks import add
-
+from .app import create_app
+from .utils import setup_db
 def main():
-    print('Running app')
-    print('I will wait 3 seconds for celery to connect to broker')
-    time.sleep(3)
-    print('I will now call a task')
-    time.sleep(10)
-    result = add.apply_async((2, 2,))
-    print('Task called, waiting for celery to give me the answer')
-    print(f'Answer: {result.get()}')
+    setup_db()
+    app = create_app()
+    app.run(port=8000, host="0.0.0.0")
 
 if __name__ == '__main__':
     main()

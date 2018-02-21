@@ -11,4 +11,6 @@ ENV PYTHONPATH=/src
 COPY . /src
 RUN python /src/setup.py develop
 
+EXPOSE 80
+
 CMD ["celery_dao"]
