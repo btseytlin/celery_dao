@@ -1,25 +1,19 @@
 import json
 from flask import Flask, request, abort, Response, g
-from .utils import get_db_connection
 from .celery import worker
 from celery_dao import tasks
+import os
 def create_app():
     app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
+    from .models import db, Result
+    db.init_app(app)
+
+    with app.app_context():
+        db.create_all()
 
     def celery_worker():
         return worker
-
-    def get_db():
-        db = getattr(g, '_database', None)
-        if db is None:
-            db = g._database = get_db_connection()
-        return db
-
-    @app.teardown_appcontext
-    def close_connection(exception):
-        db = getattr(g, '_database', None)
-        if db is not None:
-            db.close()
 
     @app.route('/add', methods=['POST'])
     def calculate():
@@ -34,28 +28,24 @@ def create_app():
         # Notice we do not wait for the task to complete
         # We need to respond immediately or the HTTP request will time out.
 
-        query = f'INSERT INTO results (`task_id`, `result`) VALUES (\'{task_id}\', null)'
-        con = get_db()
-        cur = con.cursor().execute(query)
-        con.commit()
+        result = Result(task_id=task_id, result=None)
+        db.session.add(result)
+        db.session.commit()
+
+        print('all results', Result.query.all())
         return Response(response=json.dumps({"task_id": task_id}))
 
 
     @app.route('/task/<task_id>', methods=['GET'])
     def get_task_result(task_id):
         task_state = 'In processing'
-        with app.app_context():
-            print(get_db().cursor().execute('SELECT * FROM results'))
-            query = f'SELECT task_id, result FROM results WHERE task_id = "{task_id}"' #  begging for sql injection
-            cur = get_db().cursor().execute(query)
-            rv = cur.fetchall()
-            if not rv:
-                abort(404)
-            result = rv[0]
-            task_result = result[1]
-            if task_result:
-                task_state = 'Done'
+
+        result = Result.query.filter_by(task_id=task_id).first()
+        if not result:
+            abort(404)
+        if result.result:
+            task_state = 'Done'
         return Response(
-            response=json.dumps({'task_id': task_id, 'state': task_state, 'result': task_result}))
+            response=json.dumps({'task_id': task_id, 'state': task_state, 'result': result.result}))
 
     return app

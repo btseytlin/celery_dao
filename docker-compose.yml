@@ -2,6 +2,13 @@ version: "3"
 services:
   rabbitmq:
     image: rabbitmq
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: pwd
+      POSTGRES_USER: user
+      POSTGRES_DB: db
   dao:
     build: .
     image: celery_dao:latest
@@ -9,18 +16,25 @@ services:
       - 8000:8000
     links:
       - rabbitmq
+      - db
     depends_on:
-      - rabbitmq
       - worker
     volumes:
       - '.:/src'
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://user:pwd@db/db"
+
   worker:
     build: .
     image: celery_dao:latest
     command: celery -A celery_dao.celery:worker worker --loglevel=info
     links:
       - rabbitmq
+      - db
     depends_on:
       - rabbitmq
+      - db
     volumes:
       - '.:/src'
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://user:pwd@db/db"
