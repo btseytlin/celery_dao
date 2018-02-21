@@ -9,11 +9,11 @@ services:
       - 8000:8000
     links:
       - rabbitmq
-    volumes:
-      - appvolume:/src
     depends_on:
       - rabbitmq
       - worker
+    volumes:
+      - '.:/src'
   worker:
     build: .
     image: celery_dao:latest
@@ -23,7 +23,4 @@ services:
     depends_on:
       - rabbitmq
     volumes:
-      - appvolume:/src
-
-volumes:
-     appvolume: {}
+      - '.:/src'

@@ -44,8 +44,8 @@ def create_app():
     @app.route('/task/<task_id>', methods=['GET'])
     def get_task_result(task_id):
         task_state = 'In processing'
-        task_result = None
         with app.app_context():
+            print(get_db().cursor().execute('SELECT * FROM results'))
             query = f'SELECT task_id, result FROM results WHERE task_id = "{task_id}"' #  begging for sql injection
             cur = get_db().cursor().execute(query)
             rv = cur.fetchall()
