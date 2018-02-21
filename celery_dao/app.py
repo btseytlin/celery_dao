@@ -1,9 +1,13 @@
 import json
 from flask import Flask, request, abort, Response, g
-from .tasks import add
 from .utils import get_db_connection
+from .celery import worker
+from celery_dao import tasks
 def create_app():
     app = Flask(__name__)
+
+    def celery_worker():
+        return worker
 
     def get_db():
         db = getattr(g, '_database', None)
@@ -21,19 +25,21 @@ def create_app():
     def calculate():
         try:
             a, b = int(request.form.get('a', None)), int(request.form.get('b', None))
-            task_id = add.apply((a, b))
-
-            # Notice we do not wait for the task to complete
-            # We need to respond immediately or the HTTP request will time out.
-
-            query = f'INSERT INTO results (`task_id`, `result`) VALUES (\'{task_id}\', null)'
-            cur = get_db().cursor().execute(query)
-            return Response(
-                response=json.dumps({"task_id": task_id}))
         except TypeError:
             abort(Response(
                 response='Expected int params a, b',
                 status=500))
+        task_id = celery_worker().send_task('celery_dao.tasks.add', args=(a, b)).id
+
+        # Notice we do not wait for the task to complete
+        # We need to respond immediately or the HTTP request will time out.
+
+        query = f'INSERT INTO results (`task_id`, `result`) VALUES (\'{task_id}\', null)'
+        con = get_db()
+        cur = con.cursor().execute(query)
+        con.commit()
+        return Response(response=json.dumps({"task_id": task_id}))
+
 
     @app.route('/task/<task_id>', methods=['GET'])
     def get_task_result(task_id):
@@ -45,7 +51,6 @@ def create_app():
             rv = cur.fetchall()
             if not rv:
                 abort(404)
-
             result = rv[0]
             task_result = result[1]
             if task_result:

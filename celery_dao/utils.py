@@ -3,7 +3,6 @@ from .config import Config
 
 
 def setup_db():
-
     con = get_db_connection()
     try:
         cursor = con.cursor()
