@@ -16,6 +16,8 @@ services:
     command: celery -A celery_dao.celery:worker worker --loglevel=info
     links:
       - rabbitmq
+    depends_on:
+      - rabbitmq
     volumes:
       - ".:/src"
 
