@@ -1,4 +1,4 @@
 celery
 flask
 psycopg2
-flask_sqlalchemy
+sqlalchemy

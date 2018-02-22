@@ -23,7 +23,7 @@ services:
       - '.:/src'
     environment:
       SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://user:pwd@db/db"
-
+      SERVER_NAME: "localhost:8000"
   worker:
     build: .
     image: celery_dao:latest

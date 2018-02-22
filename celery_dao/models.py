@@ -1,9 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
-db = SQLAlchemy()
+from sqlalchemy import Column, Integer, String
+from .db import Base
 
-class Result(db.Model):
+
+class Result(Base):
     __tablename__ = 'results'
-
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.String())
-    result = db.Column(db.String())
+    id = Column(Integer, primary_key=True)
+    task_id = Column(String())
+    result = Column(String())
