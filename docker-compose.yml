@@ -4,7 +4,6 @@ services:
     image: rabbitmq
   db:
     image: postgres
-    restart: always
     environment:
       POSTGRES_PASSWORD: pwd
       POSTGRES_USER: user
@@ -25,7 +24,6 @@ services:
       SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://user:pwd@db/db"
       SERVER_NAME: "localhost:8000"
   worker:
-    build: .
     image: celery_dao:latest
     command: celery -A celery_dao.celery:worker worker --loglevel=info
     links:

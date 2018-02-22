@@ -16,11 +16,6 @@ def create_app():
 
     init_db(app.config['SQLALCHEMY_DATABASE_URI'])
 
-    @app.teardown_appcontext
-    def shutdown_session(exception=None):
-        if hasattr(g, 'db_session'):
-            g.db_session.close()
-
     @app.route('/add', methods=['POST'])
     def calculate():
         try:
